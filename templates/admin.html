@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>پنل مدیریت | آنتانو</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="admin-body">
+
+  <h1>⚙️ پنل مدیریت آنتانو</h1>
+  <p class="sub">خوش آمدید {{ user.username }} — <a href="/chat">بازگشت به چت</a></p>
+
+  <!-- تنظیمات API هوش مصنوعی -->
+  <div class="card" style="border-color:#2dd4bf55">
+    <h2>🔑 تنظیمات API هوش مصنوعی</h2>
+    <p class="sub" style="margin-bottom:14px">کلیدها را اینجا بچسبانید، «تست» بزنید و ذخیره کنید — بدون نیاز به فایل یا ری‌استارت، همان لحظه فعال می‌شود.</p>
+
+    <h3 style="font-size:14px;margin-bottom:10px;color:#2dd4bf">هوش مصنوعی اصلی — «آنتانو (خودکار)»</h3>
+    <div class="row" style="margin-bottom:8px">
+      <select id="mainProvider">
+        <option value="groq">Groq (گراک)</option>
+        <option value="gemini">Gemini (جمنای گوگل)</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="github">GitHub Models</option>
+        <option value="openai">OpenAI (چت جی‌پی‌تی — پولی)</option>
+      </select>
+      <input type="text" id="mainKey" placeholder="کلید API را اینجا بچسبانید" style="direction:ltr;flex:1;min-width:220px">
+      <button class="mini" id="mainTest" type="button">🧪 تست</button>
+      <span id="mainTestResult" style="font-size:12px"></span>
+    </div>
+
+    <h3 style="font-size:14px;margin:18px 0 10px;color:#2dd4bf">هوش مصنوعی‌های دیگر (به همین تعداد در منوی کاربر نمایش داده می‌شود)</h3>
+    <div id="aiRows"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="mini" id="addAiRow" type="button">＋ افزودن هوش مصنوعی</button>
+      <button id="saveAiBtn" type="button">💾 ذخیره تنظیمات</button>
+      <span id="saveResult" style="font-size:12.5px"></span>
+    </div>
+  </div>
+
+  <!-- تولید کد ثبت‌نام -->
+  <div class="card">
+    <h2>تولید کد ثبت‌نام ۵۰ رقمی</h2>
+    <div class="row">
+      <select id="codeStars">
+        <option value="1">اشتراک ۱ ستاره</option>
+        <option value="2">اشتراک ۲ ستاره</option>
+        <option value="3">اشتراک ۳ ستاره</option>
+        <option value="4">اشتراک ۴ ستاره (نامحدود)</option>
+      </select>
+      <input type="number" id="codeCount" value="1" min="1" max="200" style="width:90px" title="تعداد کد">
+      <button id="genBtn">تولید کد</button>
+    </div>
+    <textarea id="newCodes" readonly placeholder="کدهای جدید اینجا نمایش داده می‌شوند"></textarea>
+  </div>
+
+  <!-- ساخت دستی کاربر -->
+  <div class="card">
+    <h2>ساخت دستی کاربر (بدون کد)</h2>
+    <div class="row">
+      <input type="text" id="nuName" placeholder="نام کاربری" style="direction:ltr">
+      <input type="text" id="nuPass" placeholder="گذرواژه" style="direction:ltr">
+      <select id="nuStars">
+        <option value="1">۱ ستاره</option>
+        <option value="2">۲ ستاره</option>
+        <option value="3">۳ ستاره</option>
+        <option value="4">۴ ستاره</option>
+      </select>
+      <button id="createUserBtn">ساخت کاربر</button>
+    </div>
+    <p class="sub" style="margin:10px 0 0">این کاربر هنگام اولین ورود به دستگاه خودش قفل می‌شود.</p>
+  </div>
+
+  <!-- کاربران -->
+  <div class="card">
+    <h2>کاربران</h2>
+    <div class="table-wrap">
+      <table class="data" id="usersTable">
+        <thead>
+          <tr><th>#</th><th>نام کاربری</th><th>اشتراک</th><th>دستگاه</th><th>تاریخ عضویت</th><th>عملیات</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- کدها -->
+  <div class="card">
+    <h2>کدهای ثبت‌نام (۵۰۰ کد آخر)</h2>
+    <div class="table-wrap">
+      <table class="data" id="codesTable">
+        <thead>
+          <tr><th>#</th><th>کد</th><th>ستاره</th><th>وضعیت</th><th>استفاده‌کننده</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+async function post(url, body) {
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    alert("خطا: " + (e.detail || r.status));
+    throw new Error("fail");
+  }
+  return r.json();
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function loadData() {
+  const r = await fetch("/admin/data");
+  if (!r.ok) { location.href = "/login"; return; }
+  const data = await r.json();
+
+  // کاربران
+  const ub = $("#usersTable tbody");
+  ub.innerHTML = "";
+  data.users.forEach(u => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${u.id}</td>
+      <td>${esc(u.username)} ${u.is_admin ? "👑" : ""}</td>
+      <td>${"★".repeat(u.stars)}</td>
+      <td>${u.device_fp ? '<span class="tag ok">قفل‌شده</span>' : '<span class="tag no">آزاد</span>'}</td>
+      <td class="ltr">${esc(u.created_at)}</td>
+      <td>
+        ${u.is_admin ? "" : `
+        <button class="mini" onclick="resetDevice(${u.id})">آزادسازی دستگاه</button>
+        <button class="mini" onclick="changeStars(${u.id})">تغییر اشتراک</button>
+        <button class="mini danger" onclick="delUser(${u.id}, '${esc(u.username)}')">حذف</button>`}
+      </td>`;
+    ub.appendChild(tr);
+  });
+
+  // کدها
+  const cb = $("#codesTable tbody");
+  cb.innerHTML = "";
+  data.codes.forEach(c => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${c.id}</td>
+      <td class="ltr">${esc(c.code)}
+        <button class="mini" onclick="navigator.clipboard.writeText('${esc(c.code)}')">کپی</button></td>
+      <td>${"★".repeat(c.stars)}</td>
+      <td>${c.used ? '<span class="tag no">استفاده شده</span>' : '<span class="tag ok">فعال</span>'}</td>
+      <td>${esc(c.used_by || "—")}</td>`;
+    cb.appendChild(tr);
+  });
+}
+
+$("#genBtn").addEventListener("click", async () => {
+  const res = await post("/admin/codes", {
+    stars: Number($("#codeStars").value),
+    count: Number($("#codeCount").value),
+  });
+  const box = $("#newCodes");
+  box.style.display = "block";
+  box.value = res.codes.join("\n");
+  loadData();
+});
+
+$("#createUserBtn").addEventListener("click", async () => {
+  await post("/admin/create_user", {
+    username: $("#nuName").value.trim(),
+    password: $("#nuPass").value,
+    stars: Number($("#nuStars").value),
+  });
+  alert("کاربر ساخته شد ✅");
+  $("#nuName").value = ""; $("#nuPass").value = "";
+  loadData();
+});
+
+async function resetDevice(id) {
+  if (!confirm("قفل دستگاه این کاربر آزاد شود؟ (برای انتقال به دستگاه جدید)")) return;
+  await post("/admin/reset_device", { user_id: id });
+  loadData();
+}
+
+async function changeStars(id) {
+  const s = prompt("اشتراک جدید (۱ تا ۴):");
+  if (!s) return;
+  await post("/admin/set_stars", { user_id: id, stars: Number(s) });
+  loadData();
+}
+
+async function delUser(id, name) {
+  if (!confirm(`کاربر «${name}» و تمام گفتگوهایش حذف شود؟`)) return;
+  await post("/admin/delete_user", { user_id: id });
+  loadData();
+}
+
+/* ---------- تنظیمات API هوش مصنوعی ---------- */
+
+const DEFAULT_MODELS = {
+  groq: "llama-3.3-70b-versatile",
+  gemini: "gemini-2.0-flash",
+  openrouter: "openrouter/free",
+  github: "openai/gpt-4o-mini",
+  openai: "gpt-4o-mini",
+};
+const SERVICE_OPTIONS = `
+  <option value="gemini">Gemini (جمنای)</option>
+  <option value="groq">Groq (گراک)</option>
+  <option value="openrouter">OpenRouter</option>
+  <option value="github">GitHub Models</option>
+  <option value="openai">OpenAI (پولی)</option>`;
+
+function addAiRow(data = {}) {
+  const row = document.createElement("div");
+  row.className = "row ai-row";
+  row.style.cssText = "margin-bottom:8px;background:var(--panel-2);padding:10px;border-radius:10px";
+  row.innerHTML = `
+    <input type="text" class="ai-name" placeholder="نام نمایشی (مثلاً: جمنای گوگل)" style="width:170px" value="${esc(data.name || "")}">
+    <select class="ai-service">${SERVICE_OPTIONS}</select>
+    <input type="text" class="ai-model" placeholder="نام مدل" style="direction:ltr;width:200px" value="${esc(data.model || "")}">
+    <input type="text" class="ai-key" placeholder="کلید API" style="direction:ltr;flex:1;min-width:180px" value="${esc(data.key || "")}">
+    <button class="mini ai-test" type="button">🧪 تست</button>
+    <button class="mini danger ai-del" type="button">حذف</button>
+    <span class="ai-result" style="font-size:12px;width:100%"></span>`;
+  const sel = row.querySelector(".ai-service");
+  sel.value = data.service || "gemini";
+  const modelInput = row.querySelector(".ai-model");
+  if (!modelInput.value) modelInput.value = DEFAULT_MODELS[sel.value] || "";
+  sel.addEventListener("change", () => {
+    if (!modelInput.value || Object.values(DEFAULT_MODELS).includes(modelInput.value))
+      modelInput.value = DEFAULT_MODELS[sel.value] || "";
+  });
+  row.querySelector(".ai-del").addEventListener("click", () => row.remove());
+  row.querySelector(".ai-test").addEventListener("click", async () => {
+    const out = row.querySelector(".ai-result");
+    out.textContent = "در حال تست…";
+    const res = await post("/admin/test_ai", {
+      service: sel.value,
+      model: modelInput.value.trim(),
+      key: row.querySelector(".ai-key").value.trim(),
+    });
+    out.textContent = res.msg;
+  });
+  $("#aiRows").appendChild(row);
+}
+
+$("#addAiRow").addEventListener("click", () => addAiRow());
+
+$("#mainProvider").addEventListener("change", () => {});
+
+$("#mainTest").addEventListener("click", async () => {
+  const out = $("#mainTestResult");
+  out.textContent = "در حال تست…";
+  const prov = $("#mainProvider").value;
+  const res = await post("/admin/test_ai", {
+    service: prov,
+    model: DEFAULT_MODELS[prov],
+    key: $("#mainKey").value.trim(),
+  });
+  out.textContent = res.msg;
+});
+
+$("#saveAiBtn").addEventListener("click", async () => {
+  const ais = [...document.querySelectorAll(".ai-row")].map(r => ({
+    name: r.querySelector(".ai-name").value.trim(),
+    service: r.querySelector(".ai-service").value,
+    model: r.querySelector(".ai-model").value.trim(),
+    key: r.querySelector(".ai-key").value.trim(),
+  })).filter(a => a.key && a.model);
+  const res = await post("/admin/ai_settings", {
+    provider: $("#mainProvider").value,
+    api_key: $("#mainKey").value.trim(),
+    model: "",
+    ais,
+  });
+  $("#saveResult").textContent = `✅ ذخیره شد — ${res.models} هوش مصنوعی در منوی کاربران فعال است`;
+});
+
+async function loadAiSettings() {
+  const r = await fetch("/admin/ai_settings");
+  if (!r.ok) return;
+  const cfg = await r.json();
+  if (cfg.provider) $("#mainProvider").value = cfg.provider;
+  $("#mainKey").value = cfg.api_key || "";
+  (cfg.ais || []).forEach(a => addAiRow(a));
+  if (!(cfg.ais || []).length) addAiRow();
+}
+
+loadAiSettings();
+loadData();
+</script>
+</body>
+</html>

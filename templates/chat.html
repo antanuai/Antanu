@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>آنتانو — دستیار هوشمند</title>
+  <link rel="icon" href="/static/logo.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+  <link rel="stylesheet" href="/static/style.css?v=1783622102">
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+</head>
+<body class="chat-page">
+
+  <div id="sideBackdrop"></div>
+
+  <aside id="sidebar">
+    <div class="side-top">
+      <button id="newChat">＋ گفتگوی جدید</button>
+    </div>
+
+    <nav id="convList"></nav>
+
+    <div class="side-bottom">
+      <div class="user-box">
+        <span>{{ user.username }}</span>
+        <span class="badge">اشتراک {{ user.stars }} ستاره</span>
+      </div>
+      <a href="#" id="memBtn" class="side-link">🧠 حافظه آنتانو</a>
+      {% if user.is_admin %}
+      <a href="/admin" class="side-link">⚙️ پنل مدیریت</a>
+      {% endif %}
+      <form method="post" action="/logout">
+        <button type="submit" class="side-link danger">🚪 خروج از حساب</button>
+      </form>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <button id="menuBtn">☰</button>
+      <img src="/static/logo.png" class="logo-sm" alt="ANTANU" width="34" height="34" style="width:34px;height:34px;border-radius:50%">
+      <h1>آنتانو <span>ANTANU</span></h1>
+      <span class="limit-note">سقف روزانه: {{ daily_limit }} پیام</span>
+    </header>
+
+    <div id="messages">
+      <div id="welcome">
+        <img src="/static/logo.png" class="logo-lg" alt="ANTANU" width="110" height="110" style="width:110px;height:110px;border-radius:50%">
+        <h2>سلام! من آنتانو هستم</h2>
+        <p>دستیار هوشمند فارسی‌زبان شما. سؤال بپرسید، فایل بفرستید،
+        با میکروفون صحبت کنید یا چند هوش مصنوعی را همزمان به کار بگیرید.<br>
+        برای ذخیره در حافظه بنویسید: <b>save\ متن</b> — یا بعد از پاسخ فقط <b>save\</b></p>
+      </div>
+    </div>
+
+    <footer>
+      <!-- انتخابگر مدل‌ها -->
+      <div class="toolbar">
+        <button id="researchBtn" class="tool-chip" title="همه هوش مصنوعی‌ها + جستجوی وب، دست‌به‌دست هم پژوهش را کامل می‌کنند">🔬 تحقیق گروهی</button>
+        <button id="docBtn" class="tool-chip" title="ساخت مقاله بلند با خروجی Word و PDF">📄 مقاله بلند</button>
+        <div class="model-wrap">
+          <button id="modelBtn" class="tool-chip">🧠 <span id="modelLabel">آنتانو (خودکار)</span> ▾</button>
+          <div id="modelPanel">
+            <label class="model-item all"><input type="checkbox" id="modelAll"> انتخاب همه</label>
+            <div id="modelList"></div>
+            <p class="model-hint">می‌توانید یک یا چند هوش مصنوعی را همزمان انتخاب کنید</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- چیپ فایل‌های پیوست -->
+      <div id="chips"></div>
+
+      <!-- نوار ورودی تلگرامی -->
+      <div class="inputbar">
+        <button id="attachBtn" class="icon-btn" title="پیوست فایل (txt, pdf, docx, csv)">📎</button>
+        <input type="file" id="fileInput" multiple
+               accept=".txt,.pdf,.docx,.csv,.md,.json,.py,.html,.xml,.log" hidden>
+        <textarea id="input" rows="1" placeholder="پیام خود را بنویسید…"></textarea>
+        <button id="webBtn" class="icon-btn" title="جستجوی وب">🌐</button>
+        <button id="micBtn" class="icon-btn" title="گفتن پیام با میکروفون">🎤</button>
+        <button id="send" title="ارسال">➤</button>
+      </div>
+      <p class="hint">آنتانو ممکن است اشتباه کند؛ اطلاعات مهم را حتماً بررسی کنید.</p>
+    </footer>
+  </main>
+
+  <!-- پنجره حافظه بلندمدت -->
+  <div id="memOverlay">
+    <div class="mem-panel">
+      <header>
+        <h3>🧠 حافظه بلندمدت آنتانو</h3>
+        <button class="close">✕</button>
+      </header>
+      <div class="mem-list"></div>
+    </div>
+  </div>
+
+  <!-- پنجره خروجی سند / مقاله بلند -->
+  <div id="docOverlay">
+    <div class="mem-panel">
+      <header>
+        <h3 id="docTitle">📄 ساخت مقاله بلند</h3>
+        <button class="close">✕</button>
+      </header>
+      <div class="doc-form">
+        <div class="doc-field" id="topicField">
+          <label>موضوع مقاله</label>
+          <textarea id="docTopic" rows="2" placeholder="مثلاً: تأثیر هوش مصنوعی بر حسابداری مدیریت"></textarea>
+        </div>
+        <div class="doc-row">
+          <div class="doc-field" id="pagesField">
+            <label>تعداد صفحه (۱ تا ۵۰۰)</label>
+            <input type="number" id="docPages" value="10" min="1" max="500">
+          </div>
+          <div class="doc-field">
+            <label>نوع فونت (Word)</label>
+            <select id="docFont">
+              <option>Vazirmatn</option>
+              <option>B Nazanin</option>
+              <option>IRANSans</option>
+              <option>B Titr</option>
+              <option>Tahoma</option>
+              <option>Times New Roman</option>
+              <option>Calibri</option>
+              <option>Arial</option>
+            </select>
+          </div>
+          <div class="doc-field">
+            <label>اندازه فونت</label>
+            <input type="number" id="docSize" value="14" min="8" max="36">
+          </div>
+          <div class="doc-field">
+            <label>قالب خروجی</label>
+            <select id="docFormat">
+              <option value="docx">Word</option>
+              <option value="pdf">PDF</option>
+              <option value="both" selected>Word + PDF</option>
+            </select>
+          </div>
+        </div>
+        <button id="docStart" class="btn-primary" style="margin-top:14px">شروع ساخت</button>
+        <p class="model-hint" id="docHint">مقاله‌های بلند بخش‌به‌بخش ساخته می‌شوند؛ هر چه صفحات بیشتر، زمان بیشتر (مثلاً ۲۰۰ صفحه ممکن است چند دقیقه طول بکشد).</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=1783622102"></script>
+</body>
+</html>

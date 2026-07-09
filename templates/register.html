@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="/static/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ثبت‌نام | آنتانو</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="auth-body">
+  <div class="auth-card">
+    <img src="/static/logo.png" class="logo-auth" alt="ANTANU" width="90" height="90" style="display:block;width:90px;height:90px;border-radius:50%;margin:0 auto 10px">
+    <div class="logo">آنتانو<small>ANTANU</small></div>
+    <h2>ثبت‌نام با کد اختصاصی</h2>
+
+    {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+
+    <form method="post" action="/register">
+      <div class="field">
+        <label>نام کاربری دلخواه</label>
+        <input type="text" name="username" class="ltr" required minlength="3">
+      </div>
+      <div class="field">
+        <label>گذرواژه (حداقل ۶ حرف)</label>
+        <input type="password" name="password" class="ltr" required minlength="6" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>کد ثبت‌نام ۵۰ رقمی (دریافتی از ادمین)</label>
+        <input type="text" name="code" class="ltr" required minlength="50" maxlength="50"
+               placeholder="کد را اینجا جای‌گذاری کنید">
+      </div>
+      <input type="hidden" name="fingerprint" value="">
+      <button type="submit" class="btn-primary">ثبت‌نام</button>
+    </form>
+
+    <div class="auth-links">
+      ⚠️ هر کد فقط برای یک کاربر و یک دستگاه معتبر است.<br>
+      حساب دارید؟ <a href="/login">ورود</a>
+      &nbsp;•&nbsp;
+      کد ندارید؟ <a href="/buy">خرید اشتراک</a>
+    </div>
+  </div>
+  <script src="/static/fingerprint.js"></script>
+</body>
+</html>

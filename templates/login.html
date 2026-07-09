@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="/static/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ورود | آنتانو</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="auth-body">
+  <div class="auth-card">
+    <img src="/static/logo.png" class="logo-auth" alt="ANTANU" width="90" height="90" style="display:block;width:90px;height:90px;border-radius:50%;margin:0 auto 10px">
+    <div class="logo">آنتانو<small>ANTANU</small></div>
+    <h2>ورود به حساب کاربری</h2>
+
+    {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+
+    <form method="post" action="/login">
+      <div class="field">
+        <label>نام کاربری</label>
+        <input type="text" name="username" class="ltr" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label>گذرواژه</label>
+        <input type="password" name="password" class="ltr" required autocomplete="current-password">
+      </div>
+      <input type="hidden" name="fingerprint" value="">
+      <button type="submit" class="btn-primary">ورود</button>
+    </form>
+
+    <div class="auth-links">
+      حساب ندارید؟ <a href="/register">ثبت‌نام با کد</a>
+      &nbsp;•&nbsp;
+      <a href="/buy">خرید اشتراک</a>
+    </div>
+  </div>
+  <script src="/static/fingerprint.js"></script>
+</body>
+</html>
